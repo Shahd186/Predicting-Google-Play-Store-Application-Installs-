@@ -18,6 +18,7 @@ const initialForm = {
 export default function App() {
     const [schema, setSchema] = useState(null);
     const [form, setForm] = useState(initialForm);
+    const [sizeVaries, setSizeVaries] = useState(false);
     const [errors, setErrors] = useState({});
     const [message, setMessage] = useState("");
     const [result, setResult] = useState(null);
@@ -51,7 +52,7 @@ export default function App() {
         event.preventDefault();
 
         const nextErrors = {};
-        if (form.size_mb === "" || Number(form.size_mb) < 0) {
+        if (!sizeVaries && (form.size_mb === "" || Number(form.size_mb) < 0)) {
             nextErrors.size_mb = "Enter a size of 0 MB or more.";
         }
         if (form.last_updated < form.released) {
@@ -68,7 +69,10 @@ export default function App() {
             const response = await fetch(`${API_URL}/predict`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, size_mb: Number(form.size_mb) }),
+                body: JSON.stringify({
+                    ...form,
+                    size_mb: sizeVaries ? null : Number(form.size_mb),
+                }),
             });
 
             if (response.status === 503) {
@@ -100,24 +104,18 @@ export default function App() {
             {schema && (
                 <form onSubmit={predict}>
                     <fieldset disabled={loading}>
-                        <legend>App details</legend>
+                        <legend>App</legend>
 
-                        {[
-                            ["category", "Category", schema.categories],
-                            ["content_rating", "Content rating", schema.content_ratings],
-                            ["minimum_android", "Minimum Android version", schema.android_versions],
-                        ].map(([name, label, options]) => (
-                            <p key={name}>
-                                <label>
-                                    {label}{" "}
-                                    <select name={name} value={form[name]} onChange={updateField}>
-                                        {options.map((option) => (
-                                            <option key={option} value={option}>{option}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                            </p>
-                        ))}
+                        <p>
+                            <label>
+                                Category{" "}
+                                <select name="category" value={form.category} onChange={updateField}>
+                                    {schema.categories.map((option) => (
+                                        <option key={option} value={option}>{option}</option>
+                                    ))}
+                                </select>
+                            </label>
+                        </p>
 
                         <p>
                             <label>
@@ -129,44 +127,118 @@ export default function App() {
 
                         <p>
                             <label>
-                                App size (MB){" "}
-                                <input type="number" step="any" name="size_mb"
-                                    value={form.size_mb} onChange={updateField} />
+                                Content rating{" "}
+                                <select name="content_rating" value={form.content_rating}
+                                    onChange={updateField}>
+                                    {schema.content_ratings.map((option) => (
+                                        <option key={option} value={option}>{option}</option>
+                                    ))}
+                                </select>
                             </label>
-                            {errors.size_mb && <span role="alert"> {errors.size_mb}</span>}
+                        </p>
+                    </fieldset>
+
+                    <fieldset disabled={loading}>
+                        <legend>Monetisation</legend>
+
+                        <p>
+                            <label>
+                                <input type="checkbox" name="free"
+                                    checked={form.free} onChange={updateField} /> Free app
+                            </label>
                         </p>
 
-                        {[
-                            ["free", "Free app"],
-                            ["ad_supported", "Contains ads"],
-                            ["privacy_policy", "Has a privacy policy"],
-                        ].map(([name, label]) => (
-                            <p key={name}>
-                                <label>
-                                    <input type="checkbox" name={name}
-                                        checked={form[name]} onChange={updateField} /> {label}
-                                </label>
-                            </p>
-                        ))}
-
-                        {[
-                            ["released", "Release date"],
-                            ["last_updated", "Last update"],
-                        ].map(([name, label]) => (
-                            <p key={name}>
-                                <label>
-                                    {label}{" "}
-                                    <input type="date" name={name} value={form[name]}
-                                        onChange={updateField} required />
-                                </label>
-                                {errors[name] && <span role="alert"> {errors[name]}</span>}
-                            </p>
-                        ))}
-
-                        <button type="submit">
-                            {loading ? "Predicting…" : "Predict installs"}
-                        </button>
+                        <p>
+                            <label>
+                                <input type="checkbox" name="ad_supported"
+                                    checked={form.ad_supported} onChange={updateField} /> Contains ads
+                            </label>
+                        </p>
                     </fieldset>
+
+                    <fieldset disabled={loading}>
+                        <legend>Technical</legend>
+
+                        <p>
+                            <label>
+                                Minimum Android version{" "}
+                                <select name="minimum_android" value={form.minimum_android}
+                                    onChange={updateField}>
+                                    {schema.android_versions.map((option) => (
+                                        <option key={option} value={option}>{option}</option>
+                                    ))}
+                                </select>
+                            </label>
+                        </p>
+
+                        <p>
+                            <label>
+                                App size (MB){" "}
+                                <input type="number" step="any" name="size_mb"
+                                    value={sizeVaries ? "" : form.size_mb}
+                                    disabled={sizeVaries}
+                                    onChange={updateField}
+                                    aria-invalid={Boolean(errors.size_mb)}
+                                    aria-describedby={errors.size_mb ? "size-error" : undefined} />
+                            </label>
+                            {errors.size_mb && <span id="size-error" role="alert"> {errors.size_mb}</span>}
+                        </p>
+
+                        <p>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={sizeVaries}
+                                    onChange={(event) => {
+                                        setSizeVaries(event.target.checked);
+                                        setErrors((previous) => ({ ...previous, size_mb: undefined }));
+                                        setResult(null);
+                                        setMessage("");
+                                    }}
+                                /> Varies with device
+                            </label>
+                        </p>
+                    </fieldset>
+
+                    <fieldset disabled={loading}>
+                        <legend>Timeline</legend>
+
+                        <p>
+                            <label>
+                                Release date{" "}
+                                <input type="date" name="released" value={form.released}
+                                    onChange={updateField} required />
+                            </label>
+                        </p>
+
+                        <p>
+                            <label>
+                                Last update{" "}
+                                <input type="date" name="last_updated" value={form.last_updated}
+                                    onChange={updateField} required
+                                    aria-invalid={Boolean(errors.last_updated)}
+                                    aria-describedby={errors.last_updated ? "date-error" : undefined} />
+                            </label>
+                            {errors.last_updated && (
+                                <span id="date-error" role="alert"> {errors.last_updated}</span>
+                            )}
+                        </p>
+                    </fieldset>
+
+                    <fieldset disabled={loading}>
+                        <legend>Policy</legend>
+
+                        <p>
+                            <label>
+                                <input type="checkbox" name="privacy_policy"
+                                    checked={form.privacy_policy} onChange={updateField} /> Has a privacy policy
+                            </label>
+                        </p>
+                    </fieldset>
+
+                    <button type="submit" disabled={loading}>
+                        {loading ? "Predicting..." : "Predict installs"}
+                    </button>
                 </form>
             )}
 
