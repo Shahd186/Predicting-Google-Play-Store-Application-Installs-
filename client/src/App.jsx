@@ -246,8 +246,11 @@ export default function App() {
                 <section aria-live="polite">
                     <h2>Predicted tier: {result.tier}</h2>
                     <p>
-                        {result.installs[0].toLocaleString("en-US")}–
-                        {result.installs[1].toLocaleString("en-US")} installs
+                        {result.installs[0].toLocaleString("en-US")}
+                        {" to "}
+                        {result.installs[1] == null
+                            ? "unlimited"
+                            : result.installs[1].toLocaleString("en-US")} installs
                     </p>
 
                     <h3>Model confidence</h3>
@@ -258,7 +261,59 @@ export default function App() {
                             </label>
                         </p>
                     ))}
+                    {result.what_if?.length > 0 && (
+                        <section>
+                            <h3>What if I change my app?</h3>
+                            <p>Change in combined model confidence for High and Very High installs:</p>
 
+                            <ul>
+                                {result.what_if.map(({ change, high_or_above }) => {
+                                    const labels = {
+                                        "ad_supported=false": "Turn ads off",
+                                        "ad_supported=true": "Turn ads on",
+                                        "free=false": "Make the app paid",
+                                        "free=true": "Make the app free",
+                                    };
+
+                                    const points = Number(high_or_above) * 100;
+                                    const amount = Math.abs(points);
+                                    const label = labels[change] ?? change;
+                                    let description = "No notable effect";
+
+                                    if (amount >= 1) {
+                                        const direction = points > 0 ? "Increase" : "Decrease";
+                                        const formatted = amount.toLocaleString("en-US", {
+                                            maximumFractionDigits: 1,
+                                        });
+                                        description = `${direction} of ${formatted} percentage ${amount === 1 ? "point" : "points"
+                                            }`;
+                                    }
+
+                                    return (
+                                        <li key={change}>
+                                            <strong>{label}:</strong> {description}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+
+                            <small>
+                                These comparisons show patterns learned from past apps.
+                                Changing a setting does not guarantee a change in actual installs.
+                            </small>
+                        </section>
+                    )}
+
+                    {result.warnings?.length > 0 && (
+                        <section>
+                            <h3>Prediction warnings</h3>
+                            <ul>
+                                {result.warnings.map((warning) => (
+                                    <li key={warning}>{warning}</li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
                     <p>Observation date: {result.observation_date}</p>
                 </section>
             )}

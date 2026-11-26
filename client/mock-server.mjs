@@ -50,13 +50,44 @@ const server = createServer(async (request, response) => {
         try {
             const app = JSON.parse(body);
             console.log("App received from React:", app);
-            return sendJson(response, 200, examplePrediction);
+            return sendJson(response, 200, {
+                ...examplePrediction,
+                what_if: [
+                    {
+                        change: `ad_supported=${!app.ad_supported}`,
+                        high_or_above: app.ad_supported ? "+0.06" : "-0.06",
+                    },
+                    {
+                        change: `free=${!app.free}`,
+                        high_or_above: app.free ? "-0.005" : "+0.005",
+                    },
+                ],
+                warnings: app.developer === "Example Dev"
+                    ? []
+                    : ["This developer was not seen in the training data."],
+            });
         } catch {
             return sendJson(response, 422, { detail: "Invalid JSON." });
         }
     }
 
-    return sendJson(response, 404, { detail: "Endpoint not found." });
+    return sendJson(response, 200, {
+        ...examplePrediction,
+        what_if: [
+            {
+                change: `ad_supported=${!app.ad_supported}`,
+                high_or_above: app.ad_supported ? "+0.06" : "-0.06",
+            },
+            {
+                change: `free=${!app.free}`,
+                high_or_above: app.free ? "-0.005" : "+0.005",
+            },
+        ],
+        warnings:
+            app.developer === "Example Dev"
+                ? []
+                : ["This developer was not seen in the training data."],
+    });
 });
 
 server.listen(8000, "127.0.0.1", () => {
