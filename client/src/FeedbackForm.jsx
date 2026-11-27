@@ -55,7 +55,7 @@ export default function FeedbackForm({ apiUrl, predictionId }) {
     }
 
     return (
-        <section aria-labelledby="feedback-title">
+        <section aria-labelledby="feedback-title" className="card feedback">
             <h3 id="feedback-title">Report actual installs</h3>
 
             <form onSubmit={submitFeedback} noValidate>

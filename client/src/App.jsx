@@ -106,7 +106,10 @@ export default function App() {
 
     return (
         <main>
-            <h1>Google Play install predictor</h1>
+            <header className="page-header">
+                <h1>Google Play Install Predictor</h1>
+                <p>Fill in your app details to predict its install tier</p>
+            </header>
 
             {message && <p role="alert">{message}</p>}
 
@@ -261,28 +264,32 @@ export default function App() {
             )}
 
             {result && (
-                <section aria-live="polite">
+                <section aria-live="polite" className="result">
+                    <div className="card tier-card">
                     <h2>Predicted tier: {result.tier}</h2>
-                    <p>
+                    <p className="tier-range">
                         {result.installs[0].toLocaleString("en-US")}
                         {" to "}
                         {result.installs[1] == null
                             ? "unlimited"
                             : result.installs[1].toLocaleString("en-US")} installs
                     </p>
+                    </div>
 
+                    <div className="card confidence">
                     <h3>Model confidence</h3>
                     {Object.entries(result.confidence).map(([tier, value]) => (
                         <p key={tier}>
                             <label>
-                                {tier} <progress value={value} max="1" /> {Math.round(value * 100)}%
+                                <span>{tier}</span> <progress value={value} max="1" /> <span className="value">{Math.round(value * 100)}%</span>
                             </label>
                         </p>
                     ))}
+                    </div>
                     {result.what_if?.length > 0 && (
-                        <section>
-                            <h3>What if I change my app?</h3>
-                            <p>Change in combined model confidence for High and Very High installs:</p>
+                        <section className="card recommendations">
+                            <h3>Recommendations</h3>
+                            <p>How each change would affect the chance of reaching High or Very High installs:</p>
 
                             <ul>
                                 {result.what_if.map(({ change, high_or_above_delta, high_or_above }) => {
@@ -308,8 +315,8 @@ export default function App() {
                                     }
 
                                     return (
-                                        <li key={change}>
-                                            <strong>{label}:</strong> {description}
+                                        <li key={change} className={amount < 1 ? "neutral" : points > 0 ? "up" : "down"}>
+                                            <strong>{label}</strong> <span>{description}</span>
                                         </li>
                                     );
                                 })}
@@ -323,7 +330,7 @@ export default function App() {
                     )}
 
                     {result.warnings?.length > 0 && (
-                        <section>
+                        <section className="card warnings">
                             <h3>Prediction warnings</h3>
                             <ul>
                                 {result.warnings.map((warning) => (
@@ -332,7 +339,7 @@ export default function App() {
                             </ul>
                         </section>
                     )}
-                    <p>Observation date: {result.observation_date}</p>
+                    <p className="observation">Observation date: {result.observation_date}</p>
                     {(result.feedback_enabled ?? true) && <FeedbackForm
                         key={result.prediction_id}
                         apiUrl={API_URL}
