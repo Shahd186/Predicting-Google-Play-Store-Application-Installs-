@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
+import FeedbackForm from "./FeedbackForm.jsx";
+
 const initialForm = {
     category: "Education",
     developer: "Example Dev",
@@ -99,7 +101,7 @@ export default function App() {
 
             {message && <p role="alert">{message}</p>}
 
-            {!schema && !message && <p>Loading form options…</p>}
+            {!schema && !message && <p>Loading form options...</p>}
 
             {schema && (
                 <form onSubmit={predict}>
@@ -315,6 +317,11 @@ export default function App() {
                         </section>
                     )}
                     <p>Observation date: {result.observation_date}</p>
+                    <FeedbackForm
+                        key={result.prediction_id}
+                        apiUrl={API_URL}
+                        predictionId={result.prediction_id}
+                    />
                 </section>
             )}
         </main>

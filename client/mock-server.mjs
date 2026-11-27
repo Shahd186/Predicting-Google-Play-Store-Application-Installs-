@@ -1,4 +1,7 @@
 import { createServer } from "node:http";
+import { randomUUID } from "node:crypto";
+
+const predictions = new Map();
 
 const schema = {
     categories: ["Education"],
@@ -43,6 +46,46 @@ const server = createServer(async (request, response) => {
         return sendJson(response, 200, schema);
     }
 
+    if (request.method === "POST" && request.url === "/feedback") {
+        let body = "";
+        for await (const chunk of request) body += chunk;
+
+        let feedback;
+        try {
+            feedback = JSON.parse(body);
+        } catch {
+            return sendJson(response, 422, { detail: "Invalid JSON." });
+        }
+
+        const prediction = predictions.get(feedback?.prediction_id);
+        if (!prediction) {
+            return sendJson(response, 404, {
+                detail: "Prediction not found. Make a new prediction and try again.",
+            });
+        }
+
+        const count = feedback.actual_installs;
+        if (!Number.isSafeInteger(count) || count < 0) {
+            return sendJson(response, 422, {
+                detail: "Actual installs must be a whole number of zero or more.",
+            });
+        }
+
+        if (prediction.actualInstalls !== null) {
+            return sendJson(response, 409, {
+                detail: "Feedback has already been recorded for this prediction.",
+            });
+        }
+
+        prediction.actualInstalls = count;
+        console.log("Feedback received:", feedback);
+
+        return sendJson(response, 201, {
+            prediction_id: feedback.prediction_id,
+            actual_installs: count,
+        });
+    }
+
     if (request.method === "POST" && request.url === "/predict") {
         let body = "";
         for await (const chunk of request) body += chunk;
@@ -50,8 +93,11 @@ const server = createServer(async (request, response) => {
         try {
             const app = JSON.parse(body);
             console.log("App received from React:", app);
+            const predictionId = `p-${randomUUID()}`;
+            predictions.set(predictionId, { actualInstalls: null });
             return sendJson(response, 200, {
                 ...examplePrediction,
+                prediction_id: predictionId,
                 what_if: [
                     {
                         change: `ad_supported=${!app.ad_supported}`,
