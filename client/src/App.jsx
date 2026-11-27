@@ -4,6 +4,8 @@ const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 import FeedbackForm from "./FeedbackForm.jsx";
 
+import "./App.css";
+
 const initialForm = {
     category: "Education",
     developer: "Example Dev",

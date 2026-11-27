@@ -182,3 +182,70 @@
     border-right-color: var(--border);
   }
 }
+
+#root {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px;
+    text-align: left;
+}
+
+main h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.15;
+}
+
+main fieldset {
+    min-width: 0;
+    margin: 0 0 16px;
+    padding: 16px;
+    border: 1px solid #aeb8c4;
+    border-radius: 8px;
+}
+
+main legend {
+    padding: 0 6px;
+    font-weight: 600;
+}
+
+main input,
+main select,
+main button {
+    box-sizing: border-box;
+    max-width: 100%;
+    font: inherit;
+}
+
+main button {
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+main ul {
+    padding-left: 1.5rem;
+    text-align: left;
+}
+
+main :focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    #root {
+        padding: 12px;
+    }
+
+    main fieldset {
+        padding: 12px;
+    }
+
+    main input:not([type="checkbox"]):not([type="radio"]),
+    main select {
+        display: block;
+        width: 100%;
+        margin: 4px 0 12px;
+    }
+}
