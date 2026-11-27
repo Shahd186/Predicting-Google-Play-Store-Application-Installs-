@@ -15,6 +15,7 @@ const initialForm = {
     free: true,
     ad_supported: true,
     privacy_policy: true,
+    allow_feedback: false,
     released: "2024-01-15",
     last_updated: "2026-09-01",
 };
@@ -33,7 +34,13 @@ export default function App() {
             try {
                 const response = await fetch(`${API_URL}/schema`);
                 if (!response.ok) throw new Error();
-                setSchema(await response.json());
+                const apiSchema = await response.json();
+                const allowed = (name) => apiSchema.fields?.find((field) => field.name === name)?.allowed;
+                setSchema({
+                    categories: allowed("category") ?? apiSchema.categories,
+                    content_ratings: allowed("content_rating") ?? apiSchema.content_ratings,
+                    android_versions: allowed("minimum_android") ?? apiSchema.android_versions,
+                });
             } catch {
                 setMessage("Could not load the form options. Check that the API is running, then refresh.");
             }
@@ -234,6 +241,13 @@ export default function App() {
 
                         <p>
                             <label>
+                                <input type="checkbox" name="allow_feedback"
+                                    checked={form.allow_feedback} onChange={updateField} /> Let me report actual installs later
+                            </label>
+                        </p>
+
+                        <p>
+                            <label>
                                 <input type="checkbox" name="privacy_policy"
                                     checked={form.privacy_policy} onChange={updateField} /> Has a privacy policy
                             </label>
@@ -271,7 +285,7 @@ export default function App() {
                             <p>Change in combined model confidence for High and Very High installs:</p>
 
                             <ul>
-                                {result.what_if.map(({ change, high_or_above }) => {
+                                {result.what_if.map(({ change, high_or_above_delta, high_or_above }) => {
                                     const labels = {
                                         "ad_supported=false": "Turn ads off",
                                         "ad_supported=true": "Turn ads on",
@@ -279,7 +293,7 @@ export default function App() {
                                         "free=true": "Make the app free",
                                     };
 
-                                    const points = Number(high_or_above) * 100;
+                                    const points = Number(high_or_above_delta ?? high_or_above) * 100;
                                     const amount = Math.abs(points);
                                     const label = labels[change] ?? change;
                                     let description = "No notable effect";
@@ -319,11 +333,11 @@ export default function App() {
                         </section>
                     )}
                     <p>Observation date: {result.observation_date}</p>
-                    <FeedbackForm
+                    {(result.feedback_enabled ?? true) && <FeedbackForm
                         key={result.prediction_id}
                         apiUrl={API_URL}
                         predictionId={result.prediction_id}
-                    />
+                    />}
                 </section>
             )}
         </main>

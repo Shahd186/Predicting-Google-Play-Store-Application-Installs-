@@ -1,0 +1,12 @@
+.vs/
+node_modules/
+dist/
+.venv/
+.local-api-deps/
+.env
+.env.*
+__pycache__/
+.pytest_cache/
+*.joblib
+/install-tier-service/data/
+/install-tier-service/registry/models/

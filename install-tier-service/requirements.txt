@@ -1,0 +1,13 @@
+# The model is a pickled scikit-learn object: train and serve with the SAME
+# scikit-learn version (install this file in Colab before training too).
+scikit-learn==1.9.1
+numpy>=2.0
+pandas>=2.2
+joblib>=1.4
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+apscheduler>=3.10,<4
+# tests
+httpx>=0.27
+pytest>=8

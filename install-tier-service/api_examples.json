@@ -1,0 +1,257 @@
+{
+  "note": "Real responses from the service, made with a model trained on synthetic data (numbers are illustrative).",
+  "GET /health": {
+    "status": "ready",
+    "model_version": "rf-v1"
+  },
+  "GET /schema": {
+    "model_version": "rf-v1",
+    "observation_date_default": "2026-11-27",
+    "fields": [
+      {
+        "name": "category",
+        "label": "Category",
+        "group": "App",
+        "type": "enum",
+        "required": true,
+        "allowed": [
+          "Action",
+          "Adventure",
+          "Arcade",
+          "Art & Design",
+          "Auto & Vehicles",
+          "... 46 in total"
+        ]
+      },
+      {
+        "name": "content_rating",
+        "label": "Content rating",
+        "group": "App",
+        "type": "enum",
+        "required": true,
+        "allowed": [
+          "Everyone",
+          "Everyone 10+",
+          "Teen",
+          "Mature 17+",
+          "Adults only 18+",
+          "Unrated"
+        ]
+      },
+      {
+        "name": "developer",
+        "label": "Developer name",
+        "group": "App",
+        "type": "string",
+        "required": false
+      },
+      {
+        "name": "free",
+        "label": "Free",
+        "group": "Monetisation",
+        "type": "boolean",
+        "required": true
+      },
+      {
+        "name": "ad_supported",
+        "label": "Contains ads",
+        "group": "Monetisation",
+        "type": "boolean",
+        "required": true
+      },
+      {
+        "name": "size_mb",
+        "label": "App size (MB)",
+        "group": "Technical",
+        "type": "number",
+        "required": false,
+        "min": 0,
+        "null_means": "Varies with device"
+      },
+      {
+        "name": "minimum_android",
+        "label": "Minimum Android",
+        "group": "Technical",
+        "type": "enum",
+        "required": false,
+        "allowed": [
+          "4.0",
+          "4.1",
+          "5.0",
+          "8.0",
+          "Varies"
+        ],
+        "default": "Varies"
+      },
+      {
+        "name": "released",
+        "label": "Release date",
+        "group": "Timeline",
+        "type": "date",
+        "required": true
+      },
+      {
+        "name": "last_updated",
+        "label": "Last update",
+        "group": "Timeline",
+        "type": "date",
+        "required": true
+      },
+      {
+        "name": "privacy_policy",
+        "label": "Has a privacy policy",
+        "group": "Policy",
+        "type": "boolean",
+        "required": true
+      },
+      {
+        "name": "allow_feedback",
+        "label": "Let me report actual installs later",
+        "group": "Policy",
+        "type": "boolean",
+        "default": false
+      }
+    ],
+    "tiers": [
+      {
+        "name": "Low",
+        "min": 0,
+        "max": 10000
+      },
+      {
+        "name": "Moderate",
+        "min": 10001,
+        "max": 100000
+      },
+      {
+        "name": "High",
+        "min": 100001,
+        "max": 1000000
+      },
+      {
+        "name": "Very High",
+        "min": 1000001,
+        "max": null
+      }
+    ]
+  },
+  "POST /predict request": {
+    "category": "Education",
+    "free": true,
+    "ad_supported": true,
+    "privacy_policy": true,
+    "content_rating": "Everyone",
+    "size_mb": 25,
+    "minimum_android": "5.0",
+    "developer": "Example Dev",
+    "released": "2024-01-15",
+    "last_updated": "2026-09-01",
+    "allow_feedback": true
+  },
+  "POST /predict 200": {
+    "tier": "High",
+    "installs": [
+      100001,
+      1000000
+    ],
+    "confidence": {
+      "Low": 0.0727,
+      "Moderate": 0.2054,
+      "High": 0.4551,
+      "Very High": 0.2668
+    },
+    "what_if": [
+      {
+        "change": "ad_supported=false",
+        "label": "Remove ads",
+        "high_or_above_delta": -0.2452,
+        "notable": true
+      },
+      {
+        "change": "free=false",
+        "label": "Switch to paid",
+        "high_or_above_delta": -0.0769,
+        "notable": true
+      }
+    ],
+    "prediction_id": "p-ea6a7f6b80a5",
+    "model_version": "rf-v1",
+    "observation_date": "2026-11-27",
+    "warnings": [
+      "This developer was not seen in training; developer frequency is set to 0."
+    ],
+    "feedback_enabled": true
+  },
+  "POST /predict 422": {
+    "detail": [
+      {
+        "field": "size_mb",
+        "message": "Input should be greater than or equal to 0"
+      },
+      {
+        "field": "last_updated",
+        "message": "The last update cannot be before the release date."
+      }
+    ]
+  },
+  "POST /feedback request": {
+    "prediction_id": "p-ea6a7f6b80a5",
+    "actual_installs": 48000
+  },
+  "POST /feedback 200": {
+    "status": "stored",
+    "feedback_id": 1,
+    "actual_tier": "Moderate",
+    "predicted_tier": "High",
+    "prediction_was_correct": false
+  },
+  "POST /feedback 409 (already reported)": {
+    "detail": [
+      {
+        "field": "prediction_id",
+        "message": "Installs were already reported for this prediction."
+      }
+    ]
+  },
+  "POST /feedback 404": {
+    "detail": [
+      {
+        "field": "prediction_id",
+        "message": "No prediction with this id."
+      }
+    ]
+  },
+  "GET /model": {
+    "model_version": "rf-v1",
+    "trained_at": "2026-11-27T01:20:04.395487+00:00",
+    "train_size": 24000,
+    "training_data": "googleplaystore_classification.csv",
+    "n_feedback_in_training": 0,
+    "feedback_weight": null,
+    "test_metrics": {
+      "macro_f1": 0.3793165296605601,
+      "accuracy": 0.5211666666666667,
+      "within_one_tier": 0.8683333333333333,
+      "per_tier_f1": {
+        "Low": 0.7201783723522854,
+        "Moderate": 0.34048,
+        "High": 0.29160063391442154,
+        "Very High": 0.16500711237553342
+      }
+    },
+    "developer_table_loaded": true,
+    "live_monitoring": {
+      "n_feedback": 1,
+      "macro_f1": 0.0
+    },
+    "previous_versions": [],
+    "retraining_running": false
+  },
+  "GET /health 503 (model loading)": {
+    "status": "loading",
+    "error": null
+  },
+  "POST /feedback 429 (rate limit)": {
+    "detail": "Too many reports from this address. Try again later."
+  }
+}
